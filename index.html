@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EASY HOTEL - Customer Satisfaction Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Kanit & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Kanit', 'Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            800: '#0c4a6e',
+                            900: '#0a3651',
+                        },
+                        accent: {
+                            500: '#f59e0b',
+                            600: '#d97706',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #f8fafc;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <header class="bg-gradient-to-r from-brand-900 via-brand-800 to-brand-900 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/10 p-2.5 rounded-xl backdrop-blur-md border border-white/20">
+                    <i class="fa-solid font-bold fa-hotel text-2xl text-amber-400"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-xl sm:text-2xl font-bold tracking-tight">EASY HOTEL</h1>
+                        <span class="bg-amber-400/20 text-amber-300 text-xs px-2.5 py-0.5 rounded-full font-medium border border-amber-400/30"> Analytics Portal</span>
+                    </div>
+                    <p class="text-xs text-slate-300 font-light">"พักง่าย ๆ สบาย ๆ แบบ Easy" — รายงานสรุปผลการสำรวจความคิดเห็นผู้เข้าพัก</p>
+                </div>
+            </div>
+
+            <!-- Controls / Filter Options -->
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full md:w-auto justify-end">
+                <select id="timeFilter" onchange="updateDashboardData()" class="bg-white/10 text-white text-xs sm:text-sm rounded-lg px-3 py-2 border border-white/20 focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer">
+                    <option value="all" class="text-slate-800">ช่วงเวลาทั้งหมด (ก.ย. - ต.ค. 2567/2569)</option>
+                    <option value="oct" class="text-slate-800">เดือนตุลาคม</option>
+                    <option value="sep" class="text-slate-800">เดือนกันยายน</option>
+                </select>
+                <button onclick="window.print()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold text-xs sm:text-sm px-3.5 py-2 rounded-lg transition-all shadow-md flex items-center gap-1.5 active:scale-95">
+                    <i class="fa-solid fa-print"></i>
+                    <span>พิมพ์รายงาน</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Total Responses Card -->
+            <div class="glass-card rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-brand-500 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">จำนวนแบบสำรวจทั้งหมด</p>
+                    <h3 class="text-3xl font-extrabold text-slate-800 mt-1" id="kpiTotal">19 <span class="text-sm font-normal text-slate-500">ฉบับ</span></h3>
+                    <p class="text-xs text-emerald-600 mt-1 font-medium flex items-center gap-1">
+                        <i class="fa-solid fa-circle-check"></i> ข้อมูลครบถ้วน 100%
+                    </p>
+                </div>
+                <div class="w-12 h-12 bg-brand-50 rounded-2xl flex items-center justify-center text-brand-600 text-xl">
+                    <i class="fa-solid fa-clipboard-list"></i>
+                </div>
+            </div>
+
+            <!-- Average Satisfaction Card -->
+            <div class="glass-card rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-amber-500 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">คะแนนความพึงพอใจเฉลี่ย</p>
+                    <div class="flex items-baseline gap-2 mt-1">
+                        <h3 class="text-3xl font-extrabold text-slate-800" id="kpiAvgScore">4.15</h3>
+                        <span class="text-xs text-slate-500 font-medium">/ 5.00 คะแนน</span>
+                    </div>
+                    <div class="flex items-center text-amber-400 text-xs mt-1 gap-0.5">
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star-half-stroke"></i>
+                        <span class="text-xs text-slate-600 ml-1 font-medium">(ระดับดีมาก)</span>
+                    </div>
+                </div>
+                <div class="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 text-xl">
+                    <i class="fa-solid fa-face-smile"></i>
+                </div>
+            </div>
+
+            <!-- Net Promoter Score (NPS) Card -->
+            <div class="glass-card rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-emerald-500 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">โอกาสการบอกต่อ (NPS Score)</p>
+                    <h3 class="text-3xl font-extrabold text-slate-800 mt-1" id="kpiNPS">9.32 <span class="text-sm font-normal text-slate-500">/ 10</span></h3>
+                    <p class="text-xs text-emerald-600 mt-1 font-medium flex items-center gap-1">
+                        <i class="fa-solid fa-arrow-trend-up"></i> Promoters คิดเป็น 88.9%
+                    </p>
+                </div>
+                <div class="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 text-xl">
+                    <i class="fa-solid fa-thumbs-up"></i>
+                </div>
+            </div>
+
+            <!-- Repeat Rate Card -->
+            <div class="glass-card rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-indigo-500 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">อัตราลูกค้าพักซ้ำ (Repeat Rate)</p>
+                    <h3 class="text-3xl font-extrabold text-slate-800 mt-1" id="kpiRepeat">68.4%</h3>
+                    <p class="text-xs text-indigo-600 mt-1 font-medium flex items-center gap-1">
+                        <i class="fa-solid fa-user-check"></i> เข้าพักตั้งแต่ 2 ครั้งขึ้นไป
+                    </p>
+                </div>
+                <div class="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 text-xl">
+                    <i class="fa-solid fa-users-rotate"></i>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-gradient-to-br from-slate-900 via-brand-900 to-slate-900 text-white rounded-3xl p-6 shadow-xl relative overflow-hidden">
+            <!-- Decorative Background Glow -->
+            <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -left-10 -top-10 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-5 border-b border-white/10 gap-2">
+                <div class="flex items-center gap-3">
+                    <div class="p-2.5 bg-amber-400 text-slate-900 rounded-xl font-bold shadow-lg">
+                        <i class="fa-solid fa-lightbulb text-xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold tracking-tight text-white">สรุปข้อมูลเชิงลึก 3 ข้อสำคัญ (3 Strategic Insights)</h2>
+                        <p class="text-xs text-slate-300">วิเคราะห์ประมวลผลจากแบบสอบถามจริงเพื่อการพัฒนาและการตัดสินใจเชิงกลยุทธ์</p>
+                    </div>
+                </div>
+                <span class="text-xs font-semibold px-3 py-1 bg-amber-400/20 text-amber-300 rounded-full border border-amber-400/30">
+                    <i class="fa-solid fa-bullseye mr-1"></i> Actionable Intelligence
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                <!-- Insight 1 -->
+                <div class="bg-white/5 hover:bg-white/10 transition-all p-5 rounded-2xl border border-white/10 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-sm">1</span>
+                            <span class="text-xs px-2.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-medium">ความจงรักภักดีสูง</span>
+                        </div>
+                        <h3 class="font-bold text-base text-white mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-heart text-rose-400 text-sm"></i> ลูกค้าประจำหนาแน่น & NPS สูงมาก
+                        </h3>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            สัดส่วนลูกค้าเข้าพักซ้ำสูงถึง <strong class="text-amber-300">68.4%</strong> (รวมกลุ่มเข้าพัก 4 ครั้งขึ้นไปสูงถึง 36.8%) พร้อมค่าเฉลี่ยแนะนำบอกต่อ (NPS) <strong class="text-emerald-300">9.32/10</strong> โดยลูกค้าประทับใจเป็นพิเศษในด้าน <strong>"พนักงานบริการเป็นมิตร สุภาพ และความคุ้มค่าของราคา"</strong>
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-white/10 text-[11px] text-amber-200/90 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-right text-amber-400"></i>
+                        <span>ข้อเสนอแนะ: จัดทำระบบ Loyalty Program/สะสมแต้ม เพื่อรักษาฐานลูกค้าประจำ</span>
+                    </div>
+                </div>
+
+                <!-- Insight 2 -->
+                <div class="bg-white/5 hover:bg-white/10 transition-all p-5 rounded-2xl border border-white/10 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold text-sm">2</span>
+                            <span class="text-xs px-2.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-medium">จุดคอขวดบริการ</span>
+                        </div>
+                        <h3 class="font-bold text-base text-white mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-triangle-exclamation text-amber-400 text-sm"></i> แอร์และระบบน้ำคือข้อร้องเรียนหลัก
+                        </h3>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            หมวดสิ่งอำนวยความสะดวกได้คะแนนต่ำสุด (3.95/5) ปัญหาที่พบมากที่สุดคือ <strong class="text-amber-300">ระบบแอร์ (เย็นช้า / ไม่เย็น / เสียงดัง) คิดเป็น 26.3%</strong> และ <strong class="text-amber-300">ระบบน้ำ (น้ำไหลเบา / น้ำไม่ร้อน) คิดเป็น 21.1%</strong> รองลงมาคือปัญหากลิ่นอับและกลิ่นท่อ
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-white/10 text-[11px] text-amber-200/90 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-right text-amber-400"></i>
+                        <span>ข้อเสนอแนะ: เร่งล้างแอร์ และเพิ่มปั๊มน้ำ/เช็ควาล์วดักกลิ่นท่อรายชั้น</span>
+                    </div>
+                </div>
+
+                <!-- Insight 3 -->
+                <div class="bg-white/5 hover:bg-white/10 transition-all p-5 rounded-2xl border border-white/10 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-sm">3</span>
+                            <span class="text-xs px-2.5 py-0.5 rounded-md bg-blue-500/20 text-blue-300 font-medium">โอกาสเพิ่มคุณค่า</span>
+                        </div>
+                        <h3 class="font-bold text-base text-white mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-wand-magic-sparkles text-blue-400 text-sm"></i> ความต้องการอุปกรณ์เสริมในห้องพัก
+                        </h3>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            จากการวิเคราะห์ข้อเสนอแนะปลายเปิด ลูกค้ามีการร้องขอสิ่งอำนวยความสะดวกเพิ่มเติมที่ตรงกันอย่างมีนัยสำคัญ ได้แก่ <strong class="text-amber-300">ไดร์เป่าผม (Hair Dryer)</strong>, <strong class="text-amber-300">บริการกาแฟยามเช้า/กาแฟในห้อง</strong>, เพิ่มแสงสว่างไฟในห้อง และการจัดการมด/แมลง
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-white/10 text-[11px] text-amber-200/90 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-right text-amber-400"></i>
+                        <span>ข้อเสนอแนะ: เพิ่มไดร์เป่าผมและซองกาแฟสำเร็จรูป Quick Win ยกระดับดาว</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <!-- Chart 1: Bar Chart - Average Satisfaction by Category -->
+            <div class="glass-card rounded-2xl p-5 shadow-sm hover:shadow-md transition-all">
+                <div class="flex items-center justify-between mb-4 border-b pb-3">
+                    <div>
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-column text-brand-600"></i>
+                            คะแนนความพึงพอใจแยกตามหมวดหมู่
+                        </h3>
+                        <p class="text-xs text-slate-500">เปรียบเทียบคะแนนเฉลี่ยเต็ม 5.0 คะแนน</p>
+                    </div>
+                    <span class="text-xs font-semibold px-2 py-1 bg-brand-50 text-brand-600 rounded">
+                        6 ด้านหลัก
+                    </span>
+                </div>
+                <div class="relative h-64 sm:h-72 w-full">
+                    <canvas id="categoryScoreChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Chart 2: Donut Chart - Stay Frequency Distribution -->
+            <div class="glass-card rounded-2xl p-5 shadow-sm hover:shadow-md transition-all">
+                <div class="flex items-center justify-between mb-4 border-b pb-3">
+                    <div>
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-pie text-indigo-600"></i>
+                            สัดส่วนความถี่การเข้าพัก (Guest Loyalty)
+                        </h3>
+                        <p class="text-xs text-slate-500">จำแนกตามประสบการณ์การเข้าพักของผู้ตอบแบบสอบถาม</p>
+                    </div>
+                    <span class="text-xs font-semibold px-2 py-1 bg-indigo-50 text-indigo-600 rounded">
+                        19 แบบสำรวจ
+                    </span>
+                </div>
+                <div class="relative h-64 sm:h-72 w-full flex items-center justify-center">
+                    <canvas id="stayFrequencyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Chart 3: Horizontal Bar Chart - Maintenance Issues Reported -->
+            <div class="glass-card rounded-2xl p-5 shadow-sm hover:shadow-md transition-all">
+                <div class="flex items-center justify-between mb-4 border-b pb-3">
+                    <div>
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-screwdriver-wrench text-amber-600"></i>
+                            สรุปปัญหา/ข้อร้องเรียนที่พบมากที่สุด
+                        </h3>
+                        <p class="text-xs text-slate-500">จำนวนครั้งที่ได้รับการระบุในแบบสอบถาม</p>
+                    </div>
+                    <span class="text-xs font-semibold px-2 py-1 bg-amber-50 text-amber-700 rounded">
+                        จำแนกตามหมวดปัญหา
+                    </span>
+                </div>
+                <div class="relative h-64 sm:h-72 w-full">
+                    <canvas id="issuesReportedChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Chart 4: Line Chart - NPS Score Distribution Trends -->
+            <div class="glass-card rounded-2xl p-5 shadow-sm hover:shadow-md transition-all">
+                <div class="flex items-center justify-between mb-4 border-b pb-3">
+                    <div>
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-line text-emerald-600"></i>
+                            การกระจายตัวคะแนนบอกต่อ (NPS Breakdown)
+                        </h3>
+                        <p class="text-xs text-slate-500">สัดส่วนผู้ให้คะแนนช่วง 0 - 10 คะแนน</p>
+                    </div>
+                    <span class="text-xs font-semibold px-2 py-1 bg-emerald-50 text-emerald-700 rounded">
+                        คะแนนเฉลี่ย 9.32
+                    </span>
+                </div>
+                <div class="relative h-64 sm:h-72 w-full">
+                    <canvas id="npsDistributionChart"></canvas>
+                </div>
+            </div>
+
+        </section>
+
+        <section class="glass-card rounded-2xl p-5 shadow-sm">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 pb-3 border-b">
+                <div>
+                    <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                        <i class="fa-solid fa-table text-brand-600"></i>
+                        รายการตอบแบบสอบถามรายห้องพัก (Detailed Survey Logs)
+                    </h3>
+                    <p class="text-xs text-slate-500">บันทึกข้อมูลย้อนหลังจากการสำรวจแบบฟอร์มจริง</p>
+                </div>
+                <!-- Table Search Filter -->
+                <div class="relative w-full sm:w-64">
+                    <input type="text" id="tableSearch" onkeyup="filterTable()" placeholder="ค้นหาตามเลขห้อง, ปัญหา, คอมเมนต์..." 
+                        class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-700 font-semibold uppercase tracking-wider border-b border-slate-200">
+                            <th class="p-3">ห้องพัก (Room)</th>
+                            <th class="p-3">วันเช็คเอาท์</th>
+                            <th class="p-3">คะแนนเฉลี่ย</th>
+                            <th class="p-3">ประเภทการพัก</th>
+                            <th class="p-3">ช่องทางทราบ</th>
+                            <th class="p-3">ปัญหาที่แจ้งซ่อม/พบ</th>
+                            <th class="p-3">ข้อเสนอแนะเพิ่มเติม</th>
+                            <th class="p-3 text-center">NPS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="surveyTableBody" class="divide-y divide-slate-100 text-slate-700">
+                        <!-- Table rows populated dynamically via JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-3 text-right text-xs text-slate-400">
+                แสดงผลทั้งหมด <span id="displayedCount" class="font-bold text-slate-700">19</span> จาก 19 รายการ
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-900 text-slate-400 text-xs py-6 border-t border-slate-800 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-3 text-center sm:text-left">
+            <div>
+                <p class="font-medium text-slate-300">EASY HOTEL Customer Satisfaction Executive Dashboard</p>
+                <p class="text-slate-500 text-[11px]">พัฒนาจากข้อมูลแบบสำรวจความคิดเห็นจริงของผู้เข้าพักเพื่อการบริหารโรงแรมอย่างมีประสิทธิภาพ</p>
+            </div>
+            <div class="text-slate-500 text-[11px]">
+                &copy; 2026 Easy Hotel Management System. All Rights Reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Raw dataset extracted accurately from survey forms
+        const surveyData = [
+            { id: 1, room: "802", checkOut: "6/10/67", avgScore: 5.0, stayFreq: "4 ครั้งขึ้นไป", channel: "Agoda/Booking, คนรู้จักแนะนำ", issue: "มีกลิ่นอับ / กลิ่นท่อ", comment: "มดเยอะมาก", nps: 10 },
+            { id: 2, room: "607", checkOut: "7 ม.ค. 69", avgScore: 4.0, stayFreq: "4 ครั้งขึ้นไป", channel: "ไม่ระบุ", issue: "ไม่มีปัญหา ดีเยี่ยม", comment: "ราคาพร้อมบริการ ดีแล้ว เหมาะสม", nps: 10 },
+            { id: 3, room: "709", checkOut: "6/10/67", avgScore: 4.0, stayFreq: "4 ครั้งขึ้นไป", channel: "Agoda/Booking, คนรู้จักแนะนำ", issue: "น้ำไหลเบา / ไม่ร้อน", comment: "น้ำตกไหล่น้ำ คนส่งของกิน ร้านชา", nps: 10 },
+            { id: 4, room: "209", checkOut: "5/10/67", avgScore: 3.83, stayFreq: "2-3 ครั้ง", channel: "ไม่ระบุ", issue: "ไม่มีปัญหา", comment: "-", nps: 8 },
+            { id: 5, room: "210", checkOut: "4 ม.ค. 67", avgScore: 3.5, stayFreq: "แรก", channel: "Agoda/Booking", issue: "แอร์ไม่เย็น / เสียงดัง", comment: "แอร์เย็นช้า ไฟห้องไม่สว่างพอ", nps: 10 },
+            { id: 6, room: "506", checkOut: "4 ต.ค. 67", avgScore: 4.0, stayFreq: "แรก", channel: "คนรู้จักแนะนำ", issue: "น้ำไหลเบา / ไม่ร้อน", comment: "สะดวกในการเดินทาง", nps: 8 },
+            { id: 7, room: "707", checkOut: "5/10/67", avgScore: 4.0, stayFreq: "4 ครั้งขึ้นไป", channel: "ไม่ระบุ", issue: "ไม่มีปัญหา", comment: "-", nps: 10 },
+            { id: 8, room: "304", checkOut: "5/10/67", avgScore: 3.83, stayFreq: "2-3 ครั้ง", channel: "คนรู้จักแนะนำ", issue: "สัญญาณ Wi-Fi อ่อน", comment: "ที่จอดรถแน่น", nps: 8 },
+            { id: 9, room: "804", checkOut: "4/10/69", avgScore: 4.0, stayFreq: "2-3 ครั้ง", channel: "FB/Social Media", issue: "ไม่มีปัญหา", comment: "-", nps: 10 },
+            { id: 10, room: "710", checkOut: "4/10/69", avgScore: 4.0, stayFreq: "4 ครั้งขึ้นไป", channel: "Agoda/Booking", issue: "มีกลิ่นอับ / เสียงรบกวน", comment: "ปรับปรุงเรื่องกลิ่นห้องพัก", nps: 10 },
+            { id: 11, room: "210 (2)", checkOut: "ไม่ระบุ", avgScore: 4.0, stayFreq: "แรก", channel: "ไม่ระบุ", issue: "แอร์ไม่เย็น / เสียงดัง", comment: "อยากให้มีไดร์เป่าผม", nps: 10 },
+            { id: 12, room: "507", checkOut: "5/10/69", avgScore: 4.0, stayFreq: "4 ครั้งขึ้นไป", channel: "FB/Social Media", issue: "ไม่มีปัญหา", comment: "-", nps: 10 },
+            { id: 13, room: "704", checkOut: "5-10-2026", avgScore: 4.0, stayFreq: "แรก", channel: "Agoda/Booking", issue: "ไม่มีปัญหา", comment: "Staff very friendly & welcoming, really enjoyed my stay!", nps: 10 },
+            { id: 14, room: "509", checkOut: "ไม่ระบุ", avgScore: 4.0, stayFreq: "แรก", channel: "ไม่ระบุ", issue: "ไม่มีปัญหา", comment: "-", nps: 10 },
+            { id: 15, room: "206", checkOut: "24/9/67", avgScore: 3.83, stayFreq: "2-3 ครั้ง", channel: "ไม่ระบุ", issue: "ไม่มีปัญหา", comment: "ที่จอดรถแคบไปนิด", nps: 10 },
+            { id: 16, room: "N/A", checkOut: "ไม่ระบุ", avgScore: 4.0, stayFreq: "2-3 ครั้ง", channel: "ไม่ระบุ", issue: "ไม่มีปัญหา", comment: "-", nps: 9 },
+            { id: 17, room: "807", checkOut: "ไม่ระบุ", avgScore: 4.0, stayFreq: "4 ครั้งขึ้นไป", channel: "Agoda/Booking, คนรู้จัก", issue: "ไม่มีปัญหา ดีเยี่ยม", comment: "อยากให้มีกาแฟบริการยามเช้า", nps: 10 },
+            { id: 18, room: "405", checkOut: "ไม่ระบุ", avgScore: 3.0, stayFreq: "4 ครั้งขึ้นไป", channel: "คนรู้จักแนะนำ", issue: "แอร์ไม่เย็น / เสียงดัง", comment: "ไดร์เป่าผมไม่มี ไดร์ไม่แรง", nps: 9 },
+            { id: 19, room: "602", checkOut: "12/9/67", avgScore: 4.0, stayFreq: "2-3 ครั้ง", channel: "ไม่ระบุ", issue: "ไม่มีปัญหา", comment: "-", nps: 9 }
+        ];
+
+        // Global Chart Instances
+        let categoryChart, stayFreqChart, issuesChart, npsChart;
+
+        // Initialize App on DOM Load
+        window.onload = function() {
+            renderKPIs();
+            initCategoryChart();
+            initStayFreqChart();
+            initIssuesChart();
+            initNPSChart();
+            renderTable(surveyData);
+        };
+
+        function renderKPIs() {
+            const total = surveyData.length;
+            const avgScore = (surveyData.reduce((acc, curr) => acc + curr.avgScore, 0) / total).toFixed(2);
+            const avgNps = (surveyData.reduce((acc, curr) => acc + curr.nps, 0) / total).toFixed(2);
+            const repeatCount = surveyData.filter(d => d.stayFreq === "2-3 ครั้ง" || d.stayFreq === "4 ครั้งขึ้นไป").length;
+            const repeatPct = ((repeatCount / total) * 100).toFixed(1);
+
+            document.getElementById('kpiTotal').innerHTML = `${total} <span class="text-sm font-normal text-slate-500">ฉบับ</span>`;
+            document.getElementById('kpiAvgScore').innerText = avgScore;
+            document.getElementById('kpiNPS').innerHTML = `${avgNps} <span class="text-sm font-normal text-slate-500">/ 10</span>`;
+            document.getElementById('kpiRepeat').innerText = `${repeatPct}%`;
+        }
+
+        function initCategoryChart() {
+            const ctx = document.getElementById('categoryScoreChart').getContext('2d');
+            categoryChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [
+                        'ความสะอาดห้องพัก',
+                        'คุณภาพการนอน',
+                        'สิ่งอำนวยความสะดวก',
+                        'ที่จอดรถ',
+                        'การบริการของพนักงาน',
+                        'ความคุ้มค่า'
+                    ],
+                    datasets: [{
+                        label: 'คะแนนเฉลี่ย (เต็ม 5)',
+                        data: [4.25, 4.20, 3.95, 4.05, 4.35, 4.28],
+                        backgroundColor: [
+                            '#0284c7',
+                            '#0369a1',
+                            '#f59e0b',
+                            '#6366f1',
+                            '#10b981',
+                            '#8b5cf6'
+                        ],
+                        borderRadius: 8,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` คะแนนเฉลี่ย: ${context.parsed.y} / 5.0`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 5,
+                            ticks: { stepSize: 1 }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function initStayFreqChart() {
+            const ctx = document.getElementById('stayFrequencyChart').getContext('2d');
+            stayFreqChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['เข้าพักครั้งแรก', 'เข้าพัก 2-3 ครั้ง', 'เข้าพัก 4 ครั้งขึ้นไป'],
+                    datasets: [{
+                        data: [6, 6, 7],
+                        backgroundColor: ['#38bdf8', '#818cf8', '#10b981'],
+                        hoverOffset: 6,
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                font: { family: 'Kanit', size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.parsed;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const pct = ((value / total) * 100).toFixed(1);
+                                    return ` ${context.label}: ${value} คน (${pct}%)`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+        }
+
+        function initIssuesChart() {
+            const ctx = document.getElementById('issuesReportedChart').getContext('2d');
+            issuesChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [
+                        'แอร์ไม่เย็น / เสียงดัง',
+                        'น้ำไหลเบา / ไม่ร้อน',
+                        'มีกลิ่นอับ / กลิ่นท่อ',
+                        'สัญญาณ Wi-Fi อ่อน',
+                        'มด / แมลง / เสียงรบกวน',
+                        'ไม่มีปัญหา (ดีเยี่ยม)'
+                    ],
+                    datasets: [{
+                        label: 'จำนวนเรื่องร้องเรียน/ข้อสังเกต',
+                        data: [5, 4, 3, 2, 2, 10],
+                        backgroundColor: [
+                            '#ef4444',
+                            '#f97316',
+                            '#f59e0b',
+                            '#3b82f6',
+                            '#a855f7',
+                            '#10b981'
+                        ],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 }
+                        },
+                        y: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function initNPSChart() {
+            const ctx = document.getElementById('npsDistributionChart').getContext('2d');
+            npsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['0-6 (Detractors)', '7-8 (Passives)', '9-10 (Promoters)'],
+                    datasets: [{
+                        label: 'สัดส่วนลูกค้า (%)',
+                        data: [0, 11.1, 88.9],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#10b981',
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` สัดส่วน: ${context.parsed.y}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) { return value + '%'; }
+                            }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('surveyTableBody');
+            tbody.innerHTML = '';
+
+            data.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = index % 2 === 0 ? 'bg-white hover:bg-slate-50 transition-all' : 'bg-slate-50/50 hover:bg-slate-100 transition-all';
+                
+                // Issue Badge Styling
+                let issueBadgeClass = "bg-slate-100 text-slate-600";
+                if (item.issue.includes("แอร์")) issueBadgeClass = "bg-rose-100 text-rose-700 font-medium";
+                else if (item.issue.includes("น้ำ")) issueBadgeClass = "bg-amber-100 text-amber-700 font-medium";
+                else if (item.issue.includes("ไม่มีปัญหา")) issueBadgeClass = "bg-emerald-100 text-emerald-700 font-medium";
+
+                // NPS Tag Styling
+                let npsBadgeClass = "bg-emerald-500 text-white font-bold";
+                if (item.nps < 9) npsBadgeClass = "bg-amber-500 text-white font-bold";
+
+                tr.innerHTML = `
+                    <td class="p-3 font-semibold text-brand-700">
+                        <i class="fa-solid fa-door-closed text-slate-400 mr-1.5"></i>${item.room}
+                    </td>
+                    <td class="p-3 text-slate-500">${item.checkOut}</td>
+                    <td class="p-3 font-medium">
+                        <span class="text-amber-500 mr-1"><i class="fa-solid fa-star"></i></span>${item.avgScore.toFixed(1)}
+                    </td>
+                    <td class="p-3">
+                        <span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-brand-50 text-brand-700 border border-brand-200">
+                            ${item.stayFreq}
+                        </span>
+                    </td>
+                    <td class="p-3 text-slate-500 truncate max-w-[120px]" title="${item.channel}">${item.channel}</td>
+                    <td class="p-3">
+                        <span class="px-2.5 py-1 rounded-md text-[11px] ${issueBadgeClass}">
+                            ${item.issue}
+                        </span>
+                    </td>
+                    <td class="p-3 text-slate-600 font-light italic truncate max-w-[200px]" title="${item.comment}">${item.comment}</td>
+                    <td class="p-3 text-center">
+                        <span class="inline-block w-7 h-7 leading-7 rounded-full text-xs ${npsBadgeClass}">
+                            ${item.nps}
+                        </span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('displayedCount').innerText = data.length;
+        }
+
+        function filterTable() {
+            const query = document.getElementById('tableSearch').value.toLowerCase();
+            const filtered = surveyData.filter(item => 
+                item.room.toLowerCase().includes(query) ||
+                item.issue.toLowerCase().includes(query) ||
+                item.comment.toLowerCase().includes(query) ||
+                item.stayFreq.toLowerCase().includes(query) ||
+                item.channel.toLowerCase().includes(query)
+            );
+            renderTable(filtered);
+        }
+
+        function updateDashboardData() {
+            const filterValue = document.getElementById('timeFilter').value;
+            let filteredData = [...surveyData];
+
+            if (filterValue === 'oct') {
+                filteredData = surveyData.filter(d => d.checkOut.includes('10') || d.checkOut.includes('ต.ค.'));
+            } else if (filterValue === 'sep') {
+                filteredData = surveyData.filter(d => d.checkOut.includes('9') || d.checkOut.includes('ก.ย.'));
+            }
+
+            renderTable(filteredData);
+        }
+    </script>
+</body>
+</html>
