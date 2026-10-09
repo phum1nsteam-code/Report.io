@@ -16,9 +16,6 @@
     <!-- PDF.js CDN for Client-side PDF Reading -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
-    
-    <!-- Tesseract.js CDN for Local Browser OCR -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
     <script>
         tailwind.config = {
@@ -390,6 +387,35 @@
 
             <!-- Tab 1: File Upload -->
             <div id="tabUpload" class="space-y-4">
+                
+                <!-- AI Direct Settings Engine (Gemini) -->
+                <div class="bg-slate-900 text-white rounded-2xl p-4 border border-slate-800 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            <h4 class="text-xs font-bold tracking-wide text-slate-200 flex items-center gap-1.5">
+                                <i class="fa-solid fa-brain text-amber-400"></i>
+                                ตั้งค่า Gemini API Key สำหรับอ่านรูปภาพ/PDF
+                            </h4>
+                        </div>
+                        <span class="text-[10px] bg-emerald-400/20 text-emerald-300 px-2 py-0.5 rounded font-mono">Google AI Studio</span>
+                    </div>
+
+                    <div class="space-y-2 text-xs">
+                        <label class="block text-slate-300 font-semibold">ใส่ Gemini API Key ของคุณ:</label>
+                        <div class="flex gap-2">
+                            <input type="password" id="geminiApiKey" placeholder="วาง Gemini API Key ที่คัดลอกมาที่นี่" 
+                                class="w-full px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-amber-400 outline-none font-mono">
+                            <button onclick="saveGeminiSettings()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1">
+                                <i class="fa-solid fa-floppy-disk"></i> บันทึก Key
+                            </button>
+                        </div>
+                        <p class="text-[11px] text-slate-400 leading-relaxed">
+                            * เมื่อวาง Key แล้วให้กดปุ่ม <strong>"บันทึก Key"</strong> ก่อนเลือกแนบไฟล์รูปภาพหรือ PDF
+                        </p>
+                    </div>
+                </div>
+
                 <div class="border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center hover:border-emerald-500 transition-colors bg-slate-50/50 relative">
                     <div class="flex justify-center gap-3 text-3xl text-emerald-500 mb-2">
                         <i class="fa-solid fa-file-pdf text-rose-500"></i>
@@ -397,7 +423,7 @@
                         <i class="fa-solid fa-file-csv text-emerald-600"></i>
                     </div>
                     <p class="text-sm font-semibold text-slate-700">ลากไฟล์ PDF, JPG, PNG หรือ CSV มาวางที่นี่</p>
-                    <p class="text-xs text-slate-400 mt-1">ระบบจะอ่านข้อความ คะแนน และสรุปเข้า Dashboard อัตโนมัติบนเบราว์เซอร์</p>
+                    <p class="text-xs text-slate-400 mt-1">ระบบจะส่งรูปให้ Gemini AI แกะข้อมูลสรุปเข้า Dashboard อัตโนมัติ</p>
                     <input type="file" id="fileInput" accept=".csv,.json,.pdf,.png,.jpg,.jpeg" onchange="handleFileUpload(event)" class="mt-4 text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer">
                 </div>
 
@@ -406,53 +432,17 @@
                     <div class="flex items-center gap-3">
                         <i class="fa-solid fa-gear fa-spin text-emerald-600 text-xl"></i>
                         <div>
-                            <p class="text-xs font-bold text-emerald-900" id="ocrStatusTitle">กำลังประมวลผลไฟล์ PDF / JPG ด้วย Native Engine...</p>
+                            <p class="text-xs font-bold text-emerald-900" id="ocrStatusTitle">กำลังประมวลผลไฟล์ด้วย Gemini AI Vision...</p>
                             <p class="text-[11px] text-emerald-700" id="ocrStatusDetail">ระบบกำลังสแกนตัวหนังสือ แกะคะแนน และจัดกลุ่มเข้าสู่ Dashboard</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- AI Direct Settings Engine (Gemini / Local Browser Engine) -->
-                <div class="bg-slate-900 text-white rounded-2xl p-4 border border-slate-800 space-y-3">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                            <h4 class="text-xs font-bold tracking-wide text-slate-200 flex items-center gap-1.5">
-                                <i class="fa-solid fa-brain text-amber-400"></i>
-                                เลือกตัวประมวลผลเอกสารอัตโนมัติ (Document OCR Engine)
-                            </h4>
-                        </div>
-                        <span class="text-[10px] bg-emerald-400/20 text-emerald-300 px-2 py-0.5 rounded font-mono">No n8n Needed</span>
-                    </div>
-
-                    <div class="space-y-2 text-xs">
-                        <label class="block text-slate-300 font-semibold">1. ใช้ Gemini Vision AI Direct (แนะนำสำหรับอ่านลายมือ):</label>
-                        <div class="flex gap-2">
-                            <input type="password" id="geminiApiKey" placeholder="วาง Gemini API Key ที่นี่ (ถ้ามี)" 
-                                class="w-full px-3 py-1.5 text-xs bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-1 focus:ring-amber-400 outline-none font-mono">
-                            <button onclick="saveGeminiSettings()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap">
-                                บันทึก Key
-                            </button>
-                        </div>
-                        <p class="text-[11px] text-slate-400">
-                            * หากใส่ Gemini API Key ระบบจะใช้ AI อ่านเอกสาร PDF/JPG และสรุปให้อย่างแม่นยำ 100% โดยตรง ไม่ผ่าน Server ใดๆ
-                        </p>
-                    </div>
-
-                    <div class="pt-2 border-t border-slate-800">
-                        <label class="block text-slate-300 font-semibold mb-1">2. กรณีไม่ได้ระบุ API Key:</label>
-                        <p class="text-[11px] text-slate-400 leading-relaxed">
-                            ระบบจะใช้ <strong>PDF.js & Local OCR Engine Client-side Engine</strong> ดึงข้อความจาก PDF/JPG สรุปเป็นข้อมูลลง Dashboard ให้ทันทีโดยอัตโนมัติ
-                        </p>
-                    </div>
-                </div>
-
                 <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 space-y-1">
                     <p class="font-bold flex items-center gap-1">
-                        <i class="fa-solid fa-circle-info"></i> รองรับประเภทไฟล์:
+                        <i class="fa-solid fa-circle-info"></i> คำแนะนำ:
                     </p>
-                    <p>• <strong>PDF / JPG / PNG:</strong> ถอดความ ถอดคะแนน 1-5 และ NPS พร้อมข้อเสนอแนะอัตโนมัติ</p>
-                    <p>• <strong>CSV / JSON:</strong> โหลดนำเข้าตาราง Dashboard ได้ทันที</p>
+                    <p>• หากยังไม่ได้ระบุ API Key ระบบจะใช้ตัวอ่านข้อความพื้นฐาน Client-side ในเบราว์เซอร์แทน</p>
                     <div class="pt-2">
                         <button onclick="downloadCSVTemplate()" class="bg-amber-200 hover:bg-amber-300 text-amber-900 px-3 py-1 rounded text-[11px] font-semibold flex items-center gap-1">
                             <i class="fa-solid fa-download"></i> ดาวน์โหลดตัวอย่างไฟล์แม่แบบ CSV
@@ -629,6 +619,10 @@
 
         function saveGeminiSettings() {
             const key = document.getElementById('geminiApiKey').value.trim();
+            if (!key) {
+                showNotification('กรุณากรอก Gemini API Key ให้ถูกต้อง', true);
+                return;
+            }
             localStorage.setItem('easyhotel_gemini_key', key);
             showNotification('บันทึก Gemini API Key เรียบร้อยแล้ว');
         }
@@ -638,7 +632,7 @@
             toast.className = `fixed bottom-5 right-5 z-50 px-4 py-3 rounded-xl text-xs font-bold text-white shadow-xl transition-all duration-300 ${isError ? 'bg-rose-600' : 'bg-emerald-600'}`;
             toast.innerHTML = `<i class="fa-solid ${isError ? 'fa-circle-xmark' : 'fa-circle-check'} mr-2"></i>${msg}`;
             document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3500);
+            setTimeout(() => toast.remove(), 4000);
         }
 
         function handleFileUpload(event) {
@@ -676,7 +670,7 @@
             }
         }
 
-        // Native Browser File Processing (No n8n required)
+        // Native Browser File Processing via Gemini AI Direct
         async function processDocumentNative(file) {
             const ocrState = document.getElementById('ocrProcessingState');
             const apiKey = document.getElementById('geminiApiKey').value.trim();
@@ -685,33 +679,51 @@
             try {
                 if (apiKey) {
                     // Method 1: Direct Gemini Vision API Analysis
-                    document.getElementById('ocrStatusTitle').innerText = 'กำลังส่งไปประมวลผลผ่าน Gemini AI Vision...';
+                    document.getElementById('ocrStatusTitle').innerText = 'กำลังประมวลผลผ่าน Gemini AI Vision...';
                     const base64Data = await fileToBase64(file);
                     const cleanBase64 = base64Data.split(',')[1];
-                    const mimeType = file.type || (file.name.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
+                    let mimeType = file.type;
+                    if (!mimeType) {
+                        if (file.name.endsWith('.pdf')) mimeType = 'application/pdf';
+                        else if (file.name.endsWith('.png')) mimeType = 'image/png';
+                        else mimeType = 'image/jpeg';
+                    }
 
+                    // Prompt & Gemini API Call (Using Standard JSON Schema format)
                     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             contents: [{
                                 parts: [
-                                    { text: `ข้อความนี้เป็นรูปหรือ PDF ใบสำรวจความพึงพอใจลูกค้าโรงแรม โปรดสกัดข้อมูลสรุปออกมาเป็น JSON รูปแบบนี้เท่านั้น:
+                                    { text: `ข้อความนี้เป็นรูปหรือ PDF ใบสำรวจความพึงพอใจลูกค้าโรงแรม โปรดสกัดข้อมูลสรุปออกมาเป็น JSON รูปแบบนี้เท่านั้น ห้ามใส่ข้อความอื่น:
                                     {"room":"เลขห้อง", "checkOut":"วันที่", "month":"เดือน (เช่น พฤศจิกายน)", "cleanliness":5, "sleep":5, "amenities":4, "parking":4, "service":5, "value":5, "stayFreq":"แรก หรือ 2-3 ครั้ง หรือ 4 ครั้งขึ้นไป", "channel":"ช่องทาง", "issue":"ระบุ เช่น ไม่มีปัญหา (ดีเยี่ยม) หรือ แอร์ไม่เย็น / เสียงดัง หรือ น้ำไหลเบา / ไม่ร้อน หรือ มีกลิ่นอับ / กลิ่นท่อ", "comment":"ข้อความเสนอแนะ", "nps":10}` },
-                                    { inline_data: { mime_type: mimeType, data: cleanBase64 } }
+                                    { 
+                                        inlineData: { 
+                                            mimeType: mimeType, 
+                                            data: cleanBase64 
+                                        } 
+                                    }
                                 ]
                             }]
                         })
                     });
 
                     const data = await response.json();
+
+                    if (!response.ok) {
+                        const errMsg = data?.error?.message || 'Gemini API เกิดข้อผิดพลาด';
+                        throw new Error(errMsg);
+                    }
+
                     const textResp = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
                     const jsonMatch = textResp.match(/\{[\s\S]*\}/);
                     
                     if (jsonMatch) {
                         const parsed = JSON.parse(jsonMatch[0]);
                         parsed.id = Date.now();
-                        parsed.avgScore = parseFloat(((parsed.cleanliness + parsed.sleep + parsed.amenities + parsed.parking + parsed.service + parsed.value) / 6).toFixed(2));
+                        parsed.avgScore = parseFloat(((Number(parsed.cleanliness || 4) + Number(parsed.sleep || 4) + Number(parsed.amenities || 4) + Number(parsed.parking || 4) + Number(parsed.service || 4) + Number(parsed.value || 4)) / 6).toFixed(2));
+                        
                         allSurveyData.push(parsed);
                         saveStateToLocalStorage();
                         populateMonthFilterOptions();
@@ -719,12 +731,12 @@
                         closeImportModal();
                         showNotification(`สกัดข้อมูลจาก ${file.name} ด้วย Gemini AI สำเร็จ (ห้อง ${parsed.room})`);
                     } else {
-                        throw new Error('ไม่พบโครงสร้าง JSON');
+                        throw new Error('ไม่สามารถแกะโครงสร้างข้อความจากรูปภาพได้');
                     }
 
                 } else {
-                    // Method 2: Native PDF.js / Browser Local Text Extraction Fallback
-                    document.getElementById('ocrStatusTitle').innerText = 'กำลังอ่านข้อมูลด้วย Native PDF.js / Browser OCR...';
+                    // Method 2: Fallback to Local PDF Reader
+                    document.getElementById('ocrStatusTitle').innerText = 'กำลังอ่านข้อมูลด้วย PDF.js Native Browser...';
                     
                     let extractedText = "";
                     if (file.name.endsWith('.pdf')) {
@@ -737,7 +749,6 @@
                         }
                     }
 
-                    // Smart pattern parsing logic
                     const roomMatch = extractedText.match(/\b\d{3}\b/) || [Math.floor(Math.random() * 800 + 101).toString()];
                     const parsedData = {
                         id: Date.now(),
@@ -768,9 +779,10 @@
 
             } catch (err) {
                 console.error(err);
-                showNotification('เกิดข้อผิดพลาดในการประมวลผลไฟล์ ลองตรวจเช็ค API Key หรือประเภทไฟล์', true);
+                showNotification(`เกิดข้อผิดพลาด: ${err.message || 'ตรวจเช็ค API Key หรือประเภทไฟล์'}`, true);
             } finally {
                 ocrState.classList.add('hidden');
+                document.getElementById('fileInput').value = '';
             }
         }
 
@@ -791,7 +803,6 @@
             const select = document.getElementById('monthSelect');
             select.innerHTML = '<option value="ALL" class="text-slate-800">ช่วงเวลาทั้งหมด (ทุกเดือน)</option>';
             
-            // Extract unique months
             const months = [...new Set(allSurveyData.map(item => item.month || 'ไม่ระบุเดือน'))];
             months.forEach(m => {
                 const opt = document.createElement('option');
@@ -815,7 +826,6 @@
 
             document.getElementById('currentMonthCount').innerText = `${currentFilteredData.length} รายการ`;
             
-            // Re-render components
             renderKPIs();
             renderInsights();
             updateCharts();
@@ -832,10 +842,10 @@
                 return;
             }
 
-            const avgScore = (currentFilteredData.reduce((acc, curr) => acc + (curr.avgScore || 4.0), 0) / total).toFixed(2);
-            const avgNps = (currentFilteredData.reduce((acc, curr) => acc + (curr.nps || 9), 0) / total).toFixed(2);
+            const avgScore = (currentFilteredData.reduce((acc, curr) => acc + (Number(curr.avgScore) || 4.0), 0) / total).toFixed(2);
+            const avgNps = (currentFilteredData.reduce((acc, curr) => acc + (Number(curr.nps) || 9), 0) / total).toFixed(2);
             
-            const promoters = currentFilteredData.filter(d => (d.nps || 9) >= 9).length;
+            const promoters = currentFilteredData.filter(d => (Number(d.nps) || 9) >= 9).length;
             const promoterPct = ((promoters / total) * 100).toFixed(1);
 
             const repeatCount = currentFilteredData.filter(d => d.stayFreq === "2-3 ครั้ง" || d.stayFreq === "4 ครั้งขึ้นไป").length;
@@ -856,7 +866,6 @@
                 return;
             }
 
-            // Calculate top issues for active month
             const issueCounts = {};
             currentFilteredData.forEach(d => {
                 const issue = d.issue || "ไม่มีปัญหา (ดีเยี่ยม)";
@@ -937,7 +946,6 @@
             const count = data.length;
             document.getElementById('chart2Count').innerText = `${count} แบบสำรวจ`;
 
-            // Calculate category averages
             const categories = [
                 { key: 'cleanliness', label: 'ความสะอาด' },
                 { key: 'sleep', label: 'คุณภาพการนอน' },
@@ -949,7 +957,7 @@
 
             const catScores = categories.map(c => {
                 if (count === 0) return 0;
-                const sum = data.reduce((acc, curr) => acc + (curr[c.key] || curr.avgScore || 4), 0);
+                const sum = data.reduce((acc, curr) => acc + Number(curr[c.key] || curr.avgScore || 4), 0);
                 return (sum / count).toFixed(2);
             });
 
@@ -1041,7 +1049,7 @@
             // 4. NPS Distribution Chart
             let detractors = 0, passives = 0, promoters = 0;
             data.forEach(d => {
-                const score = d.nps || 9;
+                const score = Number(d.nps) || 9;
                 if (score <= 6) detractors++;
                 else if (score <= 8) passives++;
                 else promoters++;
@@ -1099,7 +1107,7 @@
                     </td>
                     <td class="p-3 text-slate-500">${item.checkOut} <span class="text-[10px] text-slate-400">(${item.month || ''})</span></td>
                     <td class="p-3 font-medium">
-                        <span class="text-amber-500 mr-1"><i class="fa-solid fa-star"></i></span>${(item.avgScore || 4.0).toFixed(1)}
+                        <span class="text-amber-500 mr-1"><i class="fa-solid fa-star"></i></span>${(Number(item.avgScore) || 4.0).toFixed(1)}
                     </td>
                     <td class="p-3">
                         <span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-brand-50 text-brand-700 border border-brand-200">
@@ -1168,7 +1176,6 @@
             const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
             if (lines.length < 2) return;
 
-            const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
             const newEntries = [];
 
             for (let i = 1; i < lines.length; i++) {
@@ -1202,6 +1209,7 @@
                 populateMonthFilterOptions();
                 filterByMonth();
                 closeImportModal();
+                showNotification('นำเข้าข้อมูล CSV เรียบร้อยแล้ว');
             }
         }
 
@@ -1240,6 +1248,7 @@
             filterByMonth();
             closeImportModal();
             document.getElementById('tabManual').reset();
+            showNotification('เพิ่มข้อมูลเรียบร้อยแล้ว');
         }
 
         function deleteSurveyItem(id) {
